@@ -1,45 +1,65 @@
-
 import QtQuick
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 
 Item {
     id: root
+
     width: 300
     height: 90
 
     property real brightness: 50
+    property real maxBrightness: 100
+    property real currentBrightness: 50
 
-    Process {
-        id: brightnessRead
-        command: ["brightnessctl", "get"]
-        running: true
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let current = Number(this.text.trim())
-                if (!isNaN(current))
-                    root.brightness = current
-            }
-        }
+    function readBrightness() {
+        maxRead.running = true
     }
 
     Process {
         id: maxRead
         command: ["brightnessctl", "max"]
-        running: true
 
         stdout: StdioCollector {
             onStreamFinished: {
-                let max = Number(this.text.trim())
-                if (max > 0)
-                    root.brightness = root.brightness / max * 100
+                let value = Number(this.text.trim())
+
+                if (value > 0) {
+                    root.maxBrightness = value
+                    currentRead.running = true
+                }
+            }
+        }
+    }
+
+    Process {
+        id: currentRead
+        command: ["brightnessctl", "get"]
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let value = Number(this.text.trim())
+
+                if (root.maxBrightness > 0 && !isNaN(value)) {
+                    root.currentBrightness = value
+                    root.brightness = Math.round(
+                        value / root.maxBrightness * 100
+                    )
+                }
             }
         }
     }
 
     Process {
         id: brightnessWrite
+    }
+
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: root.readBrightness()
     }
 
     Rectangle {
@@ -50,7 +70,7 @@ Item {
         Column {
             anchors.fill: parent
             anchors.margins: 14
-            spacing: 10
+            spacing: 12
 
             Row {
                 width: parent.width
@@ -71,21 +91,68 @@ Item {
                 }
             }
 
-            Slider {
+            Rectangle {
+                id: track
                 width: parent.width
-                from: 1
-                to: 100
-                value: root.brightness
+                height: 9
+                radius: 5
+                color: "#414868"
 
-                onMoved: {
-                    brightnessWrite.command = [
-                        "brightnessctl", "set",
-                        Math.round(value) + "%"
-                    ]
-                    brightnessWrite.running = true
-                    root.brightness = value
+                Rectangle {
+                    width: track.width * root.brightness / 100
+                    height: parent.height
+                    radius: 5
+                    color: "#e0af68"
+                }
+
+                Rectangle {
+                    id: knob
+                    width: 17
+                    height: 17
+                    radius: 9
+                    color: "#c0caf5"
+
+                    x: Math.max(
+                        0,
+                        Math.min(
+                            track.width - width,
+                            track.width * root.brightness / 100 - width / 2
+                        )
+                    )
+
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+
+                    function updateValue(mouseX) {
+                        let percentage = Math.max(
+                            1,
+                            Math.min(100, mouseX / width * 100)
+                        )
+
+                        root.brightness = percentage
+
+                        brightnessWrite.command = [
+                            "brightnessctl",
+                            "set",
+                            Math.round(percentage) + "%"
+                        ]
+
+                        brightnessWrite.running = true
+                    }
+
+                    onPressed: mouse => updateValue(mouse.x)
+
+                    onPositionChanged: mouse => {
+                        if (pressed)
+                            updateValue(mouse.x)
+                    }
                 }
             }
         }
     }
+
+    Component.onCompleted: readBrightness()
 }
