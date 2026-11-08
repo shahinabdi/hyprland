@@ -1,6 +1,7 @@
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import "modules"
 
 PanelWindow {
@@ -13,12 +14,12 @@ PanelWindow {
     }
 
     margins {
-        right: 16
-        top: 16
-        bottom: 16
+        right: 12
+        top: 12
+        bottom: 12
     }
 
-    width: 340
+    width: 360
     color: "transparent"
 
     Rectangle {
@@ -28,139 +29,109 @@ PanelWindow {
         border.width: 1
         border.color: "#414868"
 
-        Column {
+        Flickable {
             anchors.fill: parent
-            anchors.margins: 22
-            spacing: 22
+            anchors.margins: 20
+            contentWidth: width
+            contentHeight: contentColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-            // Header
             Column {
-                spacing: 5
+                id: contentColumn
+                width: parent.width
+                spacing: 18
 
-                Text {
-                    text: "Quick Settings"
-                    color: "#c0caf5"
-                    font.pixelSize: 23
-                    font.bold: true
+                // HEADER
+                Column {
+                    spacing: 5
+
+                    Text {
+                        text: "Quick Settings"
+                        color: "#c0caf5"
+                        font.pixelSize: 24
+                        font.bold: true
+                    }
+
+                    Text {
+                        text: "TOKYO NIGHT  •  ARCH LINUX"
+                        color: "#7aa2f7"
+                        font.pixelSize: 10
+                        font.letterSpacing: 1.5
+                    }
                 }
 
-                Text {
-                    text: "TOKYO NIGHT  •  ARCH LINUX"
-                    color: "#7aa2f7"
-                    font.pixelSize: 10
-                    font.letterSpacing: 1.5
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#414868"
                 }
-            }
 
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: "#414868"
-            }
-
-            // Connectivity
-            Column {
-                width: parent.width
-                spacing: 10
-
+                // CONNECTIVITY
                 Text {
                     text: "CONNECTIVITY"
-                    color: "#565f89"
+                    color: "#7aa2f7"
                     font.pixelSize: 11
                     font.bold: true
                 }
 
-                // Functional Wi-Fi module
                 Wifi {
                     width: parent.width
                 }
 
-                // Bluetooth placeholder
+                BluetoothCard {
+                    width: parent.width
+                }
+
                 Rectangle {
                     width: parent.width
-                    height: 76
-                    radius: 14
-                    color: "#24283b"
-
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 5
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "ᛒ  Bluetooth"
-                            color: "#7aa2f7"
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Device controls coming next"
-                            color: "#a9b1d6"
-                            font.pixelSize: 11
-                        }
-                    }
+                    height: 1
+                    color: "#414868"
                 }
-            }
 
-            // Audio section
-            Column {
-                width: parent.width
-                spacing: 10
-
+                // AUDIO
                 Text {
-                    text: "AUDIO & DISPLAY"
-                    color: "#565f89"
+                    text: "AUDIO"
+                    color: "#7aa2f7"
                     font.pixelSize: 11
                     font.bold: true
                 }
 
-                Rectangle {
+                AudioCard {
                     width: parent.width
-                    height: 65
-                    radius: 14
-                    color: "#24283b"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "♫   Volume controls"
-                        color: "#c0caf5"
-                        font.pixelSize: 14
-                    }
                 }
 
                 Rectangle {
                     width: parent.width
-                    height: 65
-                    radius: 14
-                    color: "#24283b"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "☼   Brightness controls"
-                        color: "#c0caf5"
-                        font.pixelSize: 14
-                    }
+                    height: 1
+                    color: "#414868"
                 }
-            }
 
-            Item {
-                width: 1
-                height: 1
-            }
+                // DISPLAY
+                Text {
+                    text: "DISPLAY"
+                    color: "#7aa2f7"
+                    font.pixelSize: 11
+                    font.bold: true
+                }
 
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: "#414868"
-            }
+                BrightnessCard {
+                    width: parent.width
+                }
 
-            Text {
-                text: "ARCH LINUX  •  HYPRLAND"
-                color: "#565f89"
-                font.pixelSize: 10
-                anchors.horizontalCenter: parent.horizontalCenter
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#414868"
+                }
+
+                // FOOTER
+                Text {
+                    text: "ARCH LINUX  •  HYPRLAND"
+                    color: "#565f89"
+                    font.pixelSize: 10
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
             }
         }
     }
