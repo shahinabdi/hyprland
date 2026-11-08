@@ -165,7 +165,7 @@ PanelWindow {
             }
 
             Item {
-                Layout.fillHeight: true
+                width: 1
                 height: 1
             }
 
