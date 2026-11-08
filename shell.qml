@@ -1,6 +1,7 @@
 
 import QtQuick
 import Quickshell
+import "modules"
 
 PanelWindow {
     id: sidebar
@@ -57,8 +58,9 @@ PanelWindow {
                 color: "#414868"
             }
 
-            // Network section
+            // Connectivity
             Column {
+                width: parent.width
                 spacing: 10
 
                 Text {
@@ -68,33 +70,12 @@ PanelWindow {
                     font.bold: true
                 }
 
-                Rectangle {
+                // Functional Wi-Fi module
+                Wifi {
                     width: parent.width
-                    height: 76
-                    radius: 14
-                    color: "#24283b"
-
-                    Column {
-                        anchors.centerIn: parent
-                        spacing: 5
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "◉  Wi-Fi"
-                            color: "#7aa2f7"
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: "Network controls coming next"
-                            color: "#a9b1d6"
-                            font.pixelSize: 11
-                        }
-                    }
                 }
 
+                // Bluetooth placeholder
                 Rectangle {
                     width: parent.width
                     height: 76
