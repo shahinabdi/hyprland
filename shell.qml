@@ -1,7 +1,5 @@
-
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import "modules"
 
 PanelWindow {
@@ -19,7 +17,7 @@ PanelWindow {
         bottom: 12
     }
 
-    width: 360
+    implicitWidth: 360
     color: "transparent"
 
     Rectangle {
@@ -32,13 +30,16 @@ PanelWindow {
         Flickable {
             anchors.fill: parent
             anchors.margins: 20
+
             contentWidth: width
             contentHeight: contentColumn.implicitHeight
+
             clip: true
             boundsBehavior: Flickable.StopAtBounds
 
             Column {
                 id: contentColumn
+
                 width: parent.width
                 spacing: 18
 
