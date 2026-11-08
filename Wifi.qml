@@ -6,15 +6,19 @@ import Quickshell.Io
 Item {
     id: root
 
-    width: 296
-    height: expanded ? 390 : 112
+    width: 300
+    height: expanded
+        ? (selectedSSID.length > 0 ? 430 : 330)
+        : 142
 
     property bool wifiEnabled: false
     property bool expanded: false
+
     property string connectionName: "Not connected"
     property string statusText: "Checking Wi-Fi..."
     property string selectedSSID: ""
     property string password: ""
+
     property var networks: []
 
     function refreshStatus() {
@@ -28,7 +32,8 @@ Item {
     }
 
     function connectToNetwork(ssid, security) {
-        if (security !== "" && security !== "--" &&
+        if (security !== "" &&
+            security !== "--" &&
             root.password.length === 0) {
             root.statusText = "Enter the Wi-Fi password"
             return
@@ -38,37 +43,59 @@ Item {
 
         if (security === "" || security === "--") {
             connectProcess.command = [
-                "nmcli", "device", "wifi", "connect", ssid
+                "nmcli",
+                "device",
+                "wifi",
+                "connect",
+                ssid
             ]
         } else {
             connectProcess.command = [
-                "nmcli", "device", "wifi", "connect",
-                ssid, "password", root.password
+                "nmcli",
+                "device",
+                "wifi",
+                "connect",
+                ssid,
+                "password",
+                root.password
             ]
         }
 
         connectProcess.running = true
     }
 
+    // WIFI STATUS
     Process {
         id: wifiStatus
 
-        command: ["nmcli", "radio", "wifi"]
+        command: [
+            "nmcli",
+            "radio",
+            "wifi"
+        ]
+
         running: true
 
         stdout: StdioCollector {
             onStreamFinished: {
-                root.wifiEnabled = this.text.trim() === "enabled"
+                root.wifiEnabled =
+                    this.text.trim() === "enabled"
             }
         }
     }
 
+    // ACTIVE CONNECTION
     Process {
         id: connectionStatus
 
         command: [
-            "nmcli", "-t", "-f", "NAME,TYPE",
-            "connection", "show", "--active"
+            "nmcli",
+            "-t",
+            "-f",
+            "NAME,TYPE",
+            "connection",
+            "show",
+            "--active"
         ]
 
         running: true
@@ -79,6 +106,7 @@ Item {
 
                 for (let line of this.text.trim().split("\n")) {
                     let fields = line.split(":")
+
                     if (fields.length >= 2 &&
                         fields[1].includes("802-11-wireless")) {
                         found = fields[0].replace(/\\:/g, ":")
@@ -91,16 +119,22 @@ Item {
         }
     }
 
+    // SCAN NETWORKS
     Process {
         id: scanProcess
 
         command: [
             "nmcli",
             "--terse",
-            "--escape", "no",
-            "--fields", "SSID,SECURITY,SIGNAL",
-            "device", "wifi", "list",
-            "--rescan", "yes"
+            "--escape",
+            "no",
+            "--fields",
+            "SSID,SECURITY,SIGNAL",
+            "device",
+            "wifi",
+            "list",
+            "--rescan",
+            "yes"
         ]
 
         stdout: StdioCollector {
@@ -132,9 +166,12 @@ Item {
                     }
                 }
 
-                result.sort((a, b) => b.signal - a.signal)
+                result.sort(
+                    (a, b) => b.signal - a.signal
+                )
 
                 root.networks = result
+
                 root.statusText = result.length > 0
                     ? result.length + " networks found"
                     : "No networks found"
@@ -147,17 +184,20 @@ Item {
         }
     }
 
+    // WIFI TOGGLE
     Process {
         id: wifiToggle
 
         onExited: {
             root.refreshStatus()
+
             root.statusText = exitCode === 0
                 ? "Wi-Fi status updated"
                 : "Could not change Wi-Fi"
         }
     }
 
+    // CONNECT
     Process {
         id: connectProcess
 
@@ -168,7 +208,8 @@ Item {
                 root.selectedSSID = ""
                 root.refreshStatus()
             } else {
-                root.statusText = "Connection failed. Check password."
+                root.statusText =
+                    "Connection failed. Check password."
             }
         }
     }
@@ -177,21 +218,27 @@ Item {
         interval: 5000
         running: true
         repeat: true
+
         onTriggered: root.refreshStatus()
     }
 
+    // MAIN CARD
     Rectangle {
         anchors.fill: parent
+
         radius: 16
         color: "#24283b"
+
         border.width: 1
         border.color: "#414868"
 
         Column {
             anchors.fill: parent
             anchors.margins: 14
+
             spacing: 10
 
+            // HEADER
             Row {
                 width: parent.width
                 spacing: 10
@@ -199,8 +246,10 @@ Item {
                 Text {
                     text: "Wi-Fi"
                     color: "#c0caf5"
+
                     font.pixelSize: 16
                     font.bold: true
+
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
@@ -213,11 +262,18 @@ Item {
                     width: 58
                     height: 28
                     radius: 14
-                    color: root.wifiEnabled ? "#7aa2f7" : "#414868"
+
+                    color: root.wifiEnabled
+                        ? "#7aa2f7"
+                        : "#414868"
 
                     Text {
                         anchors.centerIn: parent
-                        text: root.wifiEnabled ? "ON" : "OFF"
+
+                        text: root.wifiEnabled
+                            ? "ON"
+                            : "OFF"
+
                         color: "#1a1b26"
                         font.pixelSize: 11
                         font.bold: true
@@ -225,24 +281,34 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
+
                         onClicked: {
                             wifiToggle.command = [
-                                "nmcli", "radio", "wifi",
-                                root.wifiEnabled ? "off" : "on"
+                                "nmcli",
+                                "radio",
+                                "wifi",
+                                root.wifiEnabled
+                                    ? "off"
+                                    : "on"
                             ]
+
                             wifiToggle.running = true
                         }
                     }
                 }
             }
 
+            // CONNECTION NAME
             Text {
                 width: parent.width
+
                 text: root.wifiEnabled
                     ? root.connectionName
                     : "Wireless network is disabled"
+
                 color: "#a9b1d6"
                 font.pixelSize: 12
+
                 elide: Text.ElideRight
             }
 
@@ -252,49 +318,59 @@ Item {
                 color: "#414868"
             }
 
+            // NETWORK BUTTONS
             Row {
                 width: parent.width
                 spacing: 8
 
                 Rectangle {
-                    width: 190
-                    height: 32
-                    radius: 8
+                    width: parent.width - 48
+                    height: 34
+                    radius: 9
                     color: "#414868"
 
                     Text {
                         anchors.centerIn: parent
-                        text: root.expanded ? "Hide networks" : "Available networks"
+
+                        text: root.expanded
+                            ? "Hide networks"
+                            : "Available networks"
+
                         color: "#c0caf5"
                         font.pixelSize: 11
+                        font.bold: true
                     }
 
                     MouseArea {
                         anchors.fill: parent
+
                         onClicked: {
                             root.expanded = !root.expanded
 
-                            if (root.expanded && root.wifiEnabled)
+                            if (root.expanded &&
+                                root.wifiEnabled) {
                                 root.scanNetworks()
+                            }
                         }
                     }
                 }
 
                 Rectangle {
-                    width: 48
-                    height: 32
-                    radius: 8
+                    width: 40
+                    height: 34
+                    radius: 9
                     color: "#414868"
 
                     Text {
                         anchors.centerIn: parent
                         text: "↻"
                         color: "#7aa2f7"
-                        font.pixelSize: 19
+                        font.pixelSize: 20
                     }
 
                     MouseArea {
                         anchors.fill: parent
+
                         onClicked: {
                             if (root.wifiEnabled)
                                 root.scanNetworks()
@@ -303,21 +379,30 @@ Item {
                 }
             }
 
+            // STATUS
             Text {
                 visible: root.expanded
+
+                width: parent.width
                 text: root.statusText
+
                 color: "#7aa2f7"
                 font.pixelSize: 10
-                width: parent.width
+
                 elide: Text.ElideRight
             }
 
+            // NETWORK LIST
             ListView {
-                visible: root.expanded && root.wifiEnabled
+                visible: root.expanded &&
+                         root.wifiEnabled
+
                 width: parent.width
                 height: 130
+
                 clip: true
                 spacing: 5
+
                 model: root.networks
 
                 delegate: Rectangle {
@@ -325,23 +410,34 @@ Item {
 
                     width: ListView.view.width
                     height: 36
+
                     radius: 8
-                    color: root.selectedSSID === modelData.ssid
-                        ? "#414868" : "#1a1b26"
+
+                    color: root.selectedSSID ===
+                           modelData.ssid
+                        ? "#414868"
+                        : "#1a1b26"
 
                     Row {
                         anchors.fill: parent
+
                         anchors.leftMargin: 9
                         anchors.rightMargin: 9
+
                         spacing: 7
 
                         Text {
                             width: 155
+
                             text: modelData.ssid
+
                             color: "#c0caf5"
                             font.pixelSize: 11
+
                             elide: Text.ElideRight
-                            anchors.verticalCenter: parent.verticalCenter
+
+                            anchors.verticalCenter:
+                                parent.verticalCenter
                         }
 
                         Text {
@@ -349,23 +445,32 @@ Item {
                                   modelData.security === "--"
                                 ? "OPEN"
                                 : "LOCK"
+
                             color: "#7aa2f7"
                             font.pixelSize: 9
-                            anchors.verticalCenter: parent.verticalCenter
+
+                            anchors.verticalCenter:
+                                parent.verticalCenter
                         }
 
                         Text {
                             text: modelData.signal + "%"
+
                             color: "#9ece6a"
                             font.pixelSize: 10
-                            anchors.verticalCenter: parent.verticalCenter
+
+                            anchors.verticalCenter:
+                                parent.verticalCenter
                         }
                     }
 
                     MouseArea {
                         anchors.fill: parent
+
                         onClicked: {
-                            root.selectedSSID = modelData.ssid
+                            root.selectedSSID =
+                                modelData.ssid
+
                             root.password = ""
 
                             if (modelData.security === "" ||
@@ -380,15 +485,19 @@ Item {
                 }
             }
 
+            // PASSWORD AND CONNECT
             Column {
                 visible: root.expanded &&
                          root.selectedSSID.length > 0 &&
                          root.wifiEnabled
+
                 width: parent.width
                 spacing: 7
 
                 Text {
-                    text: "Connect to: " + root.selectedSSID
+                    text: "Connect to: " +
+                          root.selectedSSID
+
                     color: "#c0caf5"
                     font.pixelSize: 11
                 }
@@ -396,30 +505,45 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 36
+
                     radius: 8
                     color: "#1a1b26"
+
                     border.width: 1
                     border.color: "#414868"
 
                     TextInput {
                         id: passwordInput
+
                         anchors.fill: parent
+
                         anchors.leftMargin: 10
                         anchors.rightMargin: 10
-                        verticalAlignment: TextInput.AlignVCenter
+
+                        verticalAlignment:
+                            TextInput.AlignVCenter
+
                         color: "#c0caf5"
                         font.pixelSize: 12
+
                         echoMode: TextInput.Password
                         clip: true
-                        focus: true
-                        onTextChanged: root.password = text
+
+                        onTextChanged:
+                            root.password = text
 
                         Text {
                             anchors.fill: parent
-                            verticalAlignment: Text.AlignVCenter
-                            visible: passwordInput.text.length === 0
+
+                            verticalAlignment:
+                                Text.AlignVCenter
+
+                            visible:
+                                passwordInput.text.length === 0
+
                             text: "Wi-Fi password"
                             color: "#565f89"
+
                             font.pixelSize: 11
                         }
                     }
@@ -428,29 +552,37 @@ Item {
                 Rectangle {
                     width: parent.width
                     height: 34
+
                     radius: 8
                     color: "#7aa2f7"
 
                     Text {
                         anchors.centerIn: parent
+
                         text: "Connect"
                         color: "#1a1b26"
+
                         font.pixelSize: 12
                         font.bold: true
                     }
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: {
-                            let selected = root.networks.find(
-                                network => network.ssid === root.selectedSSID
-                            )
 
-                            if (selected)
+                        onClicked: {
+                            let selected =
+                                root.networks.find(
+                                    network =>
+                                        network.ssid ===
+                                        root.selectedSSID
+                                )
+
+                            if (selected) {
                                 root.connectToNetwork(
                                     selected.ssid,
                                     selected.security
                                 )
+                            }
                         }
                     }
                 }
